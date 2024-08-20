@@ -481,7 +481,8 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
         })
         .catch(error => console.error('Error fetching data:', error));
     
-    function initializeFeatures(FeaturesCapabilitiesData) {
+    document.addEventListener("DOMContentLoaded", function() {
+        function initializeFeatures(FeaturesCapabilitiesData) {
         let boxIndex = 0;
         let currentPopup = null;
     
@@ -518,19 +519,29 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
                                 if(currentPopup){
                                     document.body.removeChild(currentPopup)
                                 }
+                        //Popup Button:
                                 // Create a popup element by first creating a div element in javascript which will serve as the popup
                                 const popup = document.createElement("div");
                                 //apply the html class onto the popup const created above
                                 popup.className = "popup";
                                 
+                                
+                                
+                        
+                        //Popup Content Button
+                                const content = document.createElement("div");
+                                content.className = "popup-content"
                                 //give the same html to the text as well
-                                popup.innerHTML = text;
+                                content.innerHTML = text;
 
+                                popup.appendChild(content);
+                        
+                        //Close Button:
                                 //create the close button
                                 const closeButton = document.createElement("button");
                                 
                                 //give the closebutton const the same html as the Close html
-                                closeButton.innerText = "close";
+                                closeButton.innerText = "popup-close";
                     
                                 //if the close button is clicked then remove the popup
                                 closeButton.onclick = function() {
@@ -542,15 +553,19 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
                                 popup.appendChild(closeButton);
                     
                                 //append the popup to the body
-                                document.body.appendChild(popup);
 
+                                document.body.appendChild(popup);
+                                
                                 currentPopup = popup
+
+                                
                             }
                         };
                     })(boxIndex)); // Pass the boxIndex to the event handler
             }
         });
     }
+});
 
     
     
