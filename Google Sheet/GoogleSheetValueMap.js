@@ -16,23 +16,17 @@ function fetchNodes() {
         const values = data.values;
         const rowsToProcess = values.slice(1);
 
-        rowsToProcess.forEach((row, colIndex) => {
-            row.forEach((cell, rowIndex) => {
+        const levels = values[0];
+
+        rowsToProcess.forEach((row) => {
+            row.forEach((cell, colIndex) => {
                 // Skip columns 2 and 5
-                if (rowIndex === 2 || rowIndex === 5) {
+                if (colIndex === 2 || colIndex === 5) {
                     return;
                 }
                 if (cell) {
-                    console.log(cell);
-                    if (rowIndex == 0 || rowIndex == 1){
-                        nodes1.push({ lvl: rowIndex.toString(), name: cell });
-                    }
-                    if (rowIndex == 3 ){
-                        nodes1.push({ lvl: "2", name: cell });
-                    }
-                    if (rowIndex == 4 ){
-                        nodes1.push({ lvl: "3", name: cell });
-                    }
+                    const level = levels[colIndex];
+                    nodes1.push({ lvl: level, name: cell });
 
                 }
             });
@@ -101,7 +95,7 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
         // For example, you can initialize the D3 visualization here
     })
     .catch(error => {
-        console.error('Error fetching data:', error);
+        console.error('Check to make sure that changes are made to both All Nodes and the levels on the spreadsheet', error);
     });
 
 
