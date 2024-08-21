@@ -18,13 +18,28 @@ function fetchNodes() {
 
         rowsToProcess.forEach((row, colIndex) => {
             row.forEach((cell, rowIndex) => {
+                // Skip columns 2 and 5
+                if (rowIndex === 2 || rowIndex === 5) {
+                    return;
+                }
                 if (cell) {
-                    nodes1.push({ lvl: rowIndex.toString(), name: cell });
+                    console.log(cell);
+                    if (rowIndex == 0 || rowIndex == 1){
+                        nodes1.push({ lvl: rowIndex.toString(), name: cell });
+                    }
+                    if (rowIndex == 3 ){
+                        nodes1.push({ lvl: "2", name: cell });
+                    }
+                    if (rowIndex == 4 ){
+                        nodes1.push({ lvl: "3", name: cell });
+                    }
+
                 }
             });
         });
     });
 }
+
 
 
 
@@ -359,16 +374,27 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
                 untravel_links();
             });
 
+            var businessValueNodesCount = nodes.filter(function(d) {
+                return d.lvl == 0; // Adjust 0 to the appropriate level number for "Business Value"
+            }).length;
+        
+            var useCasesCount = nodes.filter(function(d) {
+                return d.lvl == 1; // Adjust 0 to the appropriate level number for "Business Value"
+            }).length;
+        
+            var capabilitiesCount = nodes.filter(function(d) {
+                return d.lvl == 2; // Adjust 0 to the appropriate level number for "Business Value"
+            }).length;
             
           
-    const rangeData4 = "Use Cases Popup"
-    const UseCasesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData4}?key=${API_KEY}`;
+
+    const UseCasesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
     
     fetch(UseCasesUrl)
     .then(response => response.json())
     .then(data => {
         // Skip the first row (header) and extract data only from the second column
-        const UseCasesData = data.values.slice(1).map(row => row[1]);
+        const UseCasesData = data.values.slice(1).map(row => row[2]);
 
         // Proceed with your D3.js code
         initializeUseCases(UseCasesData);
@@ -376,26 +402,9 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
     .catch(error => console.error('Error fetching data:', error));
     
     
-    
-    
-    
-    
-    var businessValueNodesCount = nodes.filter(function(d) {
-        return d.lvl == 0; // Adjust 0 to the appropriate level number for "Business Value"
-    }).length;
-
-    var useCasesCount = nodes.filter(function(d) {
-        return d.lvl == 1; // Adjust 0 to the appropriate level number for "Business Value"
-    }).length;
-
-    var capabilitiesCount = nodes.filter(function(d) {
-        return d.lvl == 2; // Adjust 0 to the appropriate level number for "Business Value"
-    }).length;
-    
-    
     function initializeUseCases(UseCasesData) {
         let boxIndex = 0;
-        let currentPopup = null
+        let currentPopgitup = null
     
         node.each(function(d) {
             if (d.lvl == 1) {
@@ -464,25 +473,23 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
             }
         });
     }
+    
 
-
-
-    const rangeData5 = "Features Popup";
-    const FeaturesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData5}?key=${API_KEY}`;
+    const FeaturesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
     
     fetch(FeaturesUrl)
         .then(response => response.json())
         .then(data => {
             // Skip the first row (header) and extract data only from the second column
-            const FeaturesCapabilitiesData = data.values.slice(1).map(row => row[1]);
+            const FeaturesCapabilitiesData = data.values.slice(1).map(row => row[5]);
     
             // Proceed with your D3.js code
             initializeFeatures(FeaturesCapabilitiesData);
         })
         .catch(error => console.error('Error fetching data:', error));
     
-    document.addEventListener("DOMContentLoaded", function() {
-        function initializeFeatures(FeaturesCapabilitiesData) {
+
+    function initializeFeatures(FeaturesCapabilitiesData) {
         let boxIndex = 0;
         let currentPopup = null;
     
@@ -541,7 +548,7 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
                                 const closeButton = document.createElement("button");
                                 
                                 //give the closebutton const the same html as the Close html
-                                closeButton.innerText = "popup-close";
+                                closeButton.innerText = "close";
                     
                                 //if the close button is clicked then remove the popup
                                 closeButton.onclick = function() {
@@ -565,7 +572,6 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
             }
         });
     }
-});
 
     
     
