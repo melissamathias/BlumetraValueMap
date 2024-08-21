@@ -404,7 +404,7 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
     
     function initializeUseCases(UseCasesData) {
         let boxIndex = 0;
-        let currentPopgitup = null
+        let currentPopup = null
     
         node.each(function(d) {
             if (d.lvl == 1) {
