@@ -21,7 +21,7 @@ function fetchNodes() {
         rowsToProcess.forEach((row) => {
             row.forEach((cell, colIndex) => {
                 // Skip columns 2 and 5
-                if (colIndex === 2 || colIndex === 5) {
+                if (colIndex === 2 || colIndex === 3 || colIndex === 6 || colIndex === 7) {
                     return;
                 }
                 if (cell) {
@@ -88,11 +88,6 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
 
         // console.log("Data inside Promise.all:", data);
         create_relationship_diagram(data)
-
-
-
-        // Now you can proceed with the rest of your code that uses `data`
-        // For example, you can initialize the D3 visualization here
     })
     .catch(error => {
         console.error('Check to make sure that changes are made to both All Nodes and the levels on the spreadsheet', error);
@@ -380,7 +375,7 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
                 return d.lvl == 2; // Adjust 0 to the appropriate level number for "Business Value"
             }).length;
             
-          
+//break          
 
     const UseCasesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
     
@@ -389,14 +384,15 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
     .then(data => {
         // Skip the first row (header) and extract data only from the second column
         const UseCasesData = data.values.slice(1).map(row => row[2]);
+        const UseCasesLinks = data.values.slice(1).map(row => row[3]);
 
         // Proceed with your D3.js code
-        initializeUseCases(UseCasesData);
+        initializeUseCases(UseCasesData,UseCasesLinks);
     })
     .catch(error => console.error('Error fetching data:', error));
     
     
-    function initializeUseCases(UseCasesData) {
+    function initializeUseCases(UseCasesData,UseCasesLinks) {
         let boxIndex = 0;
         let currentPopup = null
     
@@ -427,93 +423,7 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
                         return function() {
                             //grab the text from UseCasesData
                             const text = UseCasesData[index - 1]; // Access the text from UseCasesData
-                            //if there is extra notes that need to be displayed then it will create the popup
-                            if (text) {
-                                //check if there already is a current popup and if there is then remove it so that there is only one popup
-                                if(currentPopup){
-                                    document.body.removeChild(currentPopup)
-                                }
-                                // Create a popup element by first creating a div element in javascript which will serve as the popup
-                                const popup = document.createElement("div");
-                                //apply the html class onto the popup const created above
-                                popup.className = "popup";
-                                
-                                //give the same html to the text as well
-                                popup.innerHTML = text;
-
-                                //create the close button
-                                const closeButton = document.createElement("button");
-                                
-                                //give the closebutton const the same html as the Close html
-                                closeButton.innerText = "close";
-                    
-                                //if the close button is clicked then remove the popup
-                                closeButton.onclick = function() {
-                                    document.body.removeChild(popup);
-                                    currentPopup = null;
-                                };
-                    
-                                //add the close button to the popup
-                                popup.appendChild(closeButton);
-                    
-                                //append the popup to the body
-                                document.body.appendChild(popup);
-
-                                currentPopup = popup
-                            }
-                        };
-                    })(boxIndex)); // Pass the boxIndex to the event handler
-                    
-            }
-        });
-    }
-    
-
-    const FeaturesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
-    
-    fetch(FeaturesUrl)
-        .then(response => response.json())
-        .then(data => {
-            // Skip the first row (header) and extract data only from the second column
-            const FeaturesCapabilitiesData = data.values.slice(1).map(row => row[5]);
-    
-            // Proceed with your D3.js code
-            initializeFeatures(FeaturesCapabilitiesData);
-        })
-        .catch(error => console.error('Error fetching data:', error));
-    
-
-    function initializeFeatures(FeaturesCapabilitiesData) {
-        let boxIndex = 0;
-        let currentPopup = null;
-    
-        node.each(function(d) {
-            if (d.lvl == 3) { // Assuming lvl 3 is the correct level for Features
-                boxIndex++;
-    
-                var smallerBox = d3.select(this)
-                    .append("rect")
-                    .attr("x", d.x + 0.95 * box_width) // Position it to the right side
-                    .attr("y", d.y)
-                    .attr("id", d.id + "-smaller-box")
-                    .attr("width", 0.05 * box_width)
-                    .attr("height", 0.66 * box_height)
-                    .attr("class", "smaller-box")
-                    .attr("rx", 2 * box_width)
-                    .attr("ry", 0.66 * box_height);
-    
-                d3.select(this)
-                    .append("text")
-                    .attr("x", d.x + 0.972 * box_width) // Adjust position for text
-                    .attr("y", d.y + 0.25 * box_height) // Adjust position for text
-                    .attr("text-anchor", "middle") // Center text horizontally
-                    .attr("alignment-baseline", "middle") // Center text vertically
-                    .text("...")
-                    .style("cursor", "pointer") // Set cursor to pointer
-                    .on("click", (function(index) {
-                        return function() {
-                            //grab the text from UseCasesData
-                            const text = FeaturesCapabilitiesData[index - 1]; // Access the text from UseCasesData
+                            const link = UseCasesLinks[index - 1]
                             //if there is extra notes that need to be displayed then it will create the popup
                             if (text) {
                                 //check if there already is a current popup and if there is then remove it so that there is only one popup
@@ -549,17 +459,144 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
                                     document.body.removeChild(popup);
                                     currentPopup = null;
                                 };
+
+                        //additional links button:
+                                const additionalLinks = document.createElement("button")
+                                additionalLinks.innerText = "Addtional Information"
+                                additionalLinks.className = "popup-additional-link"
+
+                                additionalLinks.onclick = function() {
+                                    if (!link || !isValidUrl(link)) {
+                                        alert("No Additional Information or Invalid Link");
+                                    } else {
+                                        window.open(link, '_blank');
+                                    }
+                                };
+
                     
                                 //add the close button to the popup
                                 popup.appendChild(closeButton);
+                                popup.appendChild(additionalLinks)
                     
                                 //append the popup to the body
 
                                 document.body.appendChild(popup);
-                                
-                                currentPopup = popup
+
+                                //wherever the click happened get some info about that place
 
                                 
+                                currentPopup = popup;
+                            }
+                        };
+                    })(boxIndex)); // Pass the boxIndex to the event handler
+            }
+        });
+    }
+
+
+    const FeaturesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
+    
+    fetch(FeaturesUrl)
+        .then(response => response.json())
+        .then(data => {
+            // Skip the first row (header) and extract data only from the second column
+            const FeaturesCapabilitiesData = data.values.slice(1).map(row => row[5]);
+            const FeaturesCapabilitiesLinks = data.values.slice(1).map(row => row[6]);
+    
+            // Proceed with your D3.js code
+            initializeFeatures(FeaturesCapabilitiesData, FeaturesCapabilitiesLinks);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    
+
+    function initializeFeatures(FeaturesCapabilitiesData, FeaturesCapabilitiesLinks) {
+        let boxIndex = 0;
+        let currentPopup = null;
+    
+        node.each(function(d) {
+            if (d.lvl == 3) { // Assuming lvl 3 is the correct level for Features
+                boxIndex++;
+    
+                var smallerBox = d3.select(this)
+                    .append("rect")
+                    .attr("x", d.x + 0.95 * box_width) // Position it to the right side
+                    .attr("y", d.y)
+                    .attr("id", d.id + "-smaller-box")
+                    .attr("width", 0.05 * box_width)
+                    .attr("height", 0.66 * box_height)
+                    .attr("class", "smaller-box")
+                    .attr("rx", 2 * box_width)
+                    .attr("ry", 0.66 * box_height);
+    
+                d3.select(this)
+                    .append("text")
+                    .attr("x", d.x + 0.972 * box_width) // Adjust position for text
+                    .attr("y", d.y + 0.25 * box_height) // Adjust position for text
+                    .attr("text-anchor", "middle") // Center text horizontally
+                    .attr("alignment-baseline", "middle") // Center text vertically
+                    .text("...")
+                    .style("cursor", "pointer") // Set cursor to pointer
+                    .on("click", (function(index) {
+                        return function() {
+                            //grab the text from UseCasesData
+                            const text = FeaturesCapabilitiesData[index - 1]; // Access the text from UseCasesData
+                            const link = FeaturesCapabilitiesLinks[index - 1];
+                            //if there is extra notes that need to be displayed then it will create the popup
+                            if (text) {
+                                //check if there already is a current popup and if there is then remove it so that there is only one popup
+                                if(currentPopup){
+                                    document.body.removeChild(currentPopup)
+                                }
+                        //Popup Button:
+                                // Create a popup element by first creating a div element in javascript which will serve as the popup
+                                const popup = document.createElement("div");
+                                //apply the html class onto the popup const created above
+                                popup.className = "popup";
+                                
+                                
+                                
+                        
+                        //Popup Content Button
+                                const content = document.createElement("div");
+                                content.className = "popup-content"
+                                //give the same html to the text as well
+                                content.innerHTML = text;
+
+                                popup.appendChild(content);
+                        
+                        //Close Button:
+                                //create the close button
+                                const closeButton = document.createElement("button");
+                                
+                                //give the closebutton const the same html as the Close html
+                                closeButton.innerText = "close";
+                    
+                                //if the close button is clicked then remove the popup
+                                closeButton.onclick = function() {
+                                    document.body.removeChild(popup);
+                                    currentPopup = null;
+                                };
+
+                                const additionalLinks = document.createElement("button")
+                                additionalLinks.innerText = "Addtional Information"
+                                additionalLinks.className = "popup-additional-link"
+
+                                additionalLinks.onclick = function() {
+                                    if (!link || !isValidUrl(link)) {
+                                        alert("No Additional Information or Invalid Link");
+                                    } else {
+                                        window.open(link, '_blank');
+                                    }
+                                };
+                    
+                                //add the close button to the popup
+                                popup.appendChild(closeButton);
+                                popup.appendChild(additionalLinks)
+                    
+                                //append the popup to the body
+
+                                document.body.appendChild(popup);
+                                currentPopup = popup;               
                             }
                         };
                     })(boxIndex)); // Pass the boxIndex to the event handler
@@ -678,6 +715,18 @@ Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)]
        .attr("y", 0.0000000000000000000000000001*height)
        .attr("width", 200) 
        .attr("height", 36);
+
+
+
+
+function isValidUrl(link) {
+    try {
+        new URL(link);
+        return true;
+    } catch (e) {
+        return false;
+        }
+}
 
     
 
