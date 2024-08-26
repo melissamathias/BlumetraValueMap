@@ -1,110 +1,39 @@
 const API_KEY = 'AIzaSyDpv1eTWME9FQD2fqOIBHCEUYW_pezOWBA';
 const SHEET_ID = '1f69lWzxm2BUsBZNSSvxsenOIJymSlBboN-BofV5vB9U';
+const rangeData = 'All nodes';
 
-
-
-
-
-const rangeDataBusiness = 'Business Value Nodes';
-
-const urlBusiness = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeDataBusiness}?key=${API_KEY}`;
+const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
 
 const nodes1 = [];
 
 function fetchNodes() {
-    return $.getJSON(urlBusiness).then(data => {
+    return $.getJSON(url).then(data => {
         if (!data.values) {
             console.error('No values found in the data');
             return;
         }
 
         const values = data.values;
-        const level = values[0][0];
         const rowsToProcess = values.slice(1);
 
-        rowsToProcess.forEach((row, colIndex) => {
-            const cell = row[0];
-            if (cell) {
-                nodes1.push({ lvl: level, name: cell });
+        const levels = values[0];
+
+        rowsToProcess.forEach((row) => {
+            row.forEach((cell, colIndex) => {
+                // Skip columns 2 and 5
+                if (colIndex === 2 || colIndex === 5) {
+                    return;
+                }
+                if (cell) {
+                    const level = levels[colIndex];
+                    nodes1.push({ lvl: level, name: cell });
+
                 }
             });
         });
+    });
 }
 
-const rangeDataCases = 'Use Cases';
-
-const urlCases = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeDataCases}?key=${API_KEY}`;
-
-function fetchNodes1() {
-    return $.getJSON(urlCases).then(data => {
-        if (!data.values) {
-            console.error('No values found in the data');
-            return;
-        }
-
-        const values = data.values;
-        const level = values[0][0];
-        const rowsToProcess = values.slice(1);
-
-        rowsToProcess.forEach((row, colIndex) => {
-            const cell = row[0];
-            if (cell) {
-                nodes1.push({ lvl: level, name: cell });
-                }
-            });
-        });
-}
-
-const rangeDataCapabilities = 'Use Cases';
-
-const urlCapabilities = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeDataCapabilities}?key=${API_KEY}`;
-
-function fetchNodes2() {
-    return $.getJSON(urlCapabilities).then(data => {
-        if (!data.values) {
-            console.error('No values found in the data');
-            return;
-        }
-
-        const values = data.values;
-        const level = values[0][0];
-        const rowsToProcess = values.slice(1);
-
-        rowsToProcess.forEach((row, colIndex) => {
-            const cell = row[0];
-            if (cell) {
-                nodes1.push({ lvl: level, name: cell });
-                }
-            });
-        });
-}
-
-
-const rangeDataFeatures = 'Features Nodes';
-
-const urlFeatures = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeDataFeatures}?key=${API_KEY}`;
-
-function fetchNodes3() {
-    return $.getJSON(urlFeatures).then(data => {
-        if (!data.values) {
-            console.error('No values found in the data');
-            return;
-        }
-
-        const values = data.values;
-        const level = values[0][0];
-        const rowsToProcess = values.slice(1);
-
-        rowsToProcess.forEach((row, colIndex) => {
-            const cell = row[0];
-            if (cell) {
-                nodes1.push({ lvl: level, name: cell });
-                }
-            });
-        });
-}
-
-console.log(nodes1)
 
 
 
@@ -149,29 +78,24 @@ let data = {
 
     
 
-    console.log(data);
+    // console.log(data);
 
 // Execute all fetch functions and wait for them to complete
-Promise.all([fetchNodes(), fetchNodes1(), fetchNodes2(), fetchNodes3(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)])
+Promise.all([fetchNodes(), fetchLinks(url1), fetchLinks(url2), fetchLinks(url3)])
     .then(() => {
         data.nodes = nodes1;
         data.links = links1;
 
-        console.log("Data inside Promise.all:", data);
+        // console.log("Data inside Promise.all:", data);
         create_relationship_diagram(data)
-
-
-
-        // Now you can proceed with the rest of your code that uses `data`
-        // For example, you can initialize the D3 visualization here
     })
     .catch(error => {
-        console.error('Error fetching data:', error);
+        console.error('Check to make sure that changes are made to both All Nodes and the levels on the spreadsheet', error);
     });
 
 
 
-    console.log("Data outside Promise.all:", data);
+    // console.log("Data outside Promise.all:", data);
 
 
     var width = 1600,
@@ -439,48 +363,45 @@ Promise.all([fetchNodes(), fetchNodes1(), fetchNodes2(), fetchNodes3(), fetchLin
                 untravel_links();
             });
 
+            var businessValueNodesCount = nodes.filter(function(d) {
+                return d.lvl == 0; // Adjust 0 to the appropriate level number for "Business Value"
+            }).length;
+        
+            var useCasesCount = nodes.filter(function(d) {
+                return d.lvl == 1; // Adjust 0 to the appropriate level number for "Business Value"
+            }).length;
+        
+            var capabilitiesCount = nodes.filter(function(d) {
+                return d.lvl == 2; // Adjust 0 to the appropriate level number for "Business Value"
+            }).length;
             
-          
-    const rangeData4 = "Use Cases Links"
-    const UseCasesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData4}?key=${API_KEY}`;
+//break          
+
+    const UseCasesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
     
     fetch(UseCasesUrl)
     .then(response => response.json())
     .then(data => {
-        // Convert sheet data into an array of objects
-        // Assuming the URL is in the first column (index 0) and other data in the second column (index 1)
-        const UseCasesData = data.values.map(row => ({
-            link: row[0], // URL from the first column
-            additionalInfo: row[1] // Additional info from the second column
-        }));
+        // Skip the first row (header) and extract data only from the second column
+        const UseCasesData = data.values.slice(1).map(row => row[2]);
 
         // Proceed with your D3.js code
-        initializeD3(UseCasesData);
+        initializeUseCases(UseCasesData);
     })
     .catch(error => console.error('Error fetching data:', error));
+
+    let currentPopup = null;
     
+    function initializeUseCases(UseCasesData) {
+        let boxIndex = 0;
     
-    
-    
-    
-    function initializeD3(UseCasesData) {
-        var businessValueNodesCount = nodes.filter(function(d) {
-            return d.lvl == 0; // Adjust 0 to the appropriate level number for "Business Value"
-        }).length;
-    
-        var useCasesCount = nodes.filter(function(d) {
-            return d.lvl == 1; // Adjust 0 to the appropriate level number for "Business Value"
-        }).length;
-    
-        var capabilitiesCount = nodes.filter(function(d) {
-            return d.lvl == 2; // Adjust 0 to the appropriate level number for "Business Value"
-        }).length;
-    
-        node.each(function(d, i) {
+        node.each(function(d) {
             if (d.lvl == 1) {
+                boxIndex++;
+        
                 var smallerBox = d3.select(this)
                     .append("rect")
-                    .attr("x", d.x + 0.95 * box_width) // Position it to the right side
+                    .attr("x", d.x + 0.95 * box_width)
                     .attr("y", d.y)
                     .attr("id", d.id + "-smaller-box")
                     .attr("width", 0.05 * box_width)
@@ -488,57 +409,156 @@ Promise.all([fetchNodes(), fetchNodes1(), fetchNodes2(), fetchNodes3(), fetchLin
                     .attr("class", "smaller-box")
                     .attr("rx", 2 * box_width)
                     .attr("ry", 0.66 * box_height);
-    
+        
                 d3.select(this)
                     .append("text")
-                    .attr("x", d.x + 0.972 * box_width) // Adjust position for text
-                    .attr("y", d.y + 0.25 * box_height) // Adjust position for text
-                    .attr("text-anchor", "middle") // Center text horizontally
-                    .attr("alignment-baseline", "middle") // Center text vertically
+                    .attr("x", d.x + 0.972 * box_width)
+                    .attr("y", d.y + 0.25 * box_height)
+                    .attr("text-anchor", "middle")
+                    .attr("alignment-baseline", "middle")
                     .text("...")
-                    .style("cursor", "pointer") // Set cursor to pointer
-                    .on("click", function() {
-                        const index = i - businessValueNodesCount;
-                        const link = UseCasesData[index]?.link; // Access the URL from UseCasesData
-                        if (link) {
-                            window.open(link, "_blank");
-                        }
-                    });
+                    .style("cursor", "pointer")
+                    .on("click", (function(index) {
+                        return function() {
+                            const text = UseCasesData[index - 1];
+    
+                            if (text) {
+                                // Close the currently open popup, if any
+                                if (currentPopup) {
+                                    document.body.removeChild(currentPopup);
+                                    currentPopup = null;
+                                }
+                                
+                                // Create and show the new popup
+                                const popup = document.createElement("div");
+                                popup.className = "popup";
+    
+                                const content = document.createElement("div");
+                                content.className = "popup-content";
+                                content.innerHTML = text;
+    
+                                popup.appendChild(content);
+    
+                                const closeButton = document.createElement("button");
+                                closeButton.className = "popup-close";
+                                closeButton.innerText = "close";
+                                closeButton.onclick = function() {
+                                    document.body.removeChild(popup);
+                                    currentPopup = null;
+                                };
+    
+                                popup.appendChild(closeButton);
+                                document.body.appendChild(popup);
+    
+                                const { x, y } = this.getBoundingClientRect();
+                                popup.style.position = 'absolute';
+                                popup.style.left = `${x + window.scrollX}px`;
+                                popup.style.top = `${y + window.scrollY}px`;
+    
+                                currentPopup = popup;
+                            }
+                        };
+                    })(boxIndex));
             }
         });
     }
     
     
-    node.each(function(d, i) {
-        if (d.lvl == 3) {
-            var smallerBox = d3.select(this)
-                .append("rect")
-                .attr("x", d.x + 0.95 * box_width) // Position it to the right side
-                .attr("y", d.y)
-                .attr("id", d.id + "-smaller-box")
-                .attr("width", 0.05*box_width)
-                .attr("height", 0.66*box_height)
-                .attr("class", "smaller-box")
-                .attr("rx", 2*box_width)
-                .attr("ry", 0.66*box_height)
-                
-                
-           d3.select(this)
-        .append("text")
-        .attr("x", d.x + 0.972 * box_width) // Adjust position for text
-        .attr("y", d.y + 0.25 * box_height) // Adjust position for text
-        .attr("text-anchor", "middle") // Center text horizontally
-        .attr("alignment-baseline", "middle") // Center text vertically
-        .text("...")
-        .style("cursor", "pointer") // Set cursor to pointer
-        .on("click", function(d) {
-            window.open(FeaturesNodesData[i-businessValueNodesCount-useCasesCount-capabilitiesCount].link, "_blank");
-        });
     
-                
-                
+   
+
+
+    const FeaturesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${rangeData}?key=${API_KEY}`;
+    
+    fetch(FeaturesUrl)
+        .then(response => response.json())
+        .then(data => {
+            // Skip the first row (header) and extract data only from the second column
+            const FeaturesCapabilitiesData = data.values.slice(1).map(row => row[5]);
+    
+            // Proceed with your D3.js code
+            initializeFeatures(FeaturesCapabilitiesData);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+
+
+
+        function initializeFeatures(FeaturesCapabilitiesData) {
+            let boxIndex = 0;
+            
+            node.each(function(d) {
+                if (d.lvl == 3) { // Assuming lvl 3 is the correct level for Features
+                    boxIndex++;
+            
+                    var smallerBox = d3.select(this)
+                        .append("rect")
+                        .attr("x", d.x + 0.95 * box_width)
+                        .attr("y", d.y)
+                        .attr("id", d.id + "-smaller-box")
+                        .attr("width", 0.05 * box_width)
+                        .attr("height", 0.66 * box_height)
+                        .attr("class", "smaller-box")
+                        .attr("rx", 2 * box_width)
+                        .attr("ry", 0.66 * box_height);
+            
+                    d3.select(this)
+                        .append("text")
+                        .attr("x", d.x + 0.972 * box_width)
+                        .attr("y", d.y + 0.25 * box_height)
+                        .attr("text-anchor", "middle")
+                        .attr("alignment-baseline", "middle")
+                        .text("...")
+                        .style("cursor", "pointer")
+                        .on("click", (function(index) {
+                            return function() {
+                                const text = FeaturesCapabilitiesData[index - 1];
+                                
+                                if (text) {
+                                    // Close the currently open popup, if any
+                                    if (currentPopup) {
+                                        document.body.removeChild(currentPopup);
+                                        currentPopup = null;
+                                    }
+                                    
+                                    // Create and show the new popup
+                                    const popup = document.createElement("div");
+                                    popup.className = "popup";
+        
+                                    const content = document.createElement("div");
+                                    content.className = "popup-content";
+                                    content.innerHTML = text;
+        
+                                    popup.appendChild(content);
+        
+                                    const closeButton = document.createElement("button");
+                                    closeButton.className = "popup-close";
+                                    closeButton.innerText = "close";
+                                    closeButton.onclick = function() {
+                                        document.body.removeChild(popup);
+                                        currentPopup = null;
+                                    };
+        
+                                    popup.appendChild(closeButton);
+                                    document.body.appendChild(popup);
+        
+                                    const { x, y } = this.getBoundingClientRect();
+                                    popup.style.position = 'absolute';
+                                    popup.style.left = `${x + window.scrollX}px`;
+                                    popup.style.top = `${y + window.scrollY}px`;
+        
+                                    currentPopup = popup;
+                                }
+                            };
+                        })(boxIndex));
+                }
+            });
         }
-    });
+        
+    
+
+    
+
+    
     
         node.append("text")
             .attr("class", function (d) { return "label" + d.lvl; })
