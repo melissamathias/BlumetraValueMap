@@ -200,7 +200,7 @@ async function readExcel(itemId) {
                     worksheetsDict[sheet.id] = sheet.name;
                 });
 
-                console.log("melissa is here:", worksheetsDict);
+                //console.log("melissa is here:", worksheetsDict);
 
                 // Get the keys of the dictionary
                 const worksheetIds = Object.keys(worksheetsDict);
@@ -211,65 +211,55 @@ async function readExcel(itemId) {
                 //this dictionary stores the worksheet id in the spread sheet and their respective row counts(which are transformed and stored for easy access while calling Graph API to read the spreadsheet)
                 const worksheetsRowCountDict = {};
 
-                
                 //READING THE FIRST SHEET OF EXCEL FILE
-                //initializing the levels and their cell names
-                const nodes1=[];
-
                 const id = worksheetIds[0];
                 //const name = worksheetsDict[id];
-                console.log("the worksheet id of the first sheet is:",id);
-                
-                const rowCount = await getRowCount(driveId, itemId, id, accessToken);
+                //console.log("the worksheet id of the first sheet is:",id);
 
-                console.log("the rowcount of the first sheet is:",rowCount);
+                //getting th column count for iteration purpose
+                const columnCount = await getcolumnCount(driveId, itemId, id, accessToken);
+
+                //getting the rowcount in the file
+                const rowcount = await getRowCount(driveId, itemId, id, accessToken);
 
                 //transform the row count value from 41 rows to A1:B41 as needed by the Graph API call
                 const startColumn = 'A';
                 const endColumn = 'D';
                     
-                //Create the range address string
-                const rangeAddress = `${startColumn}2:${endColumn}${rowCount}`;
-
-                console.log("the address range is:", rangeAddress);
-
-                // Update the dictionary with the worksheet ID and row count
-                /*if (rowCount !== null) {
-                    worksheetsRowCountDict[id] = rangeAddress;
-                }
-
+                // Create the range address string
+                const rangeAddress = `${startColumn}1:${endColumn}${rowcount}`;
+                
                 const rangeUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets/${id}/range(address='${rangeAddress}')`;
-                console.log("the kjdbkjdbasjkdbasdas url is:", rangeUrl);
-                try {
-                    // Fetch data from the worksheet
-                    const response = await axios.get(rangeUrl, {
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`,
-                            'Accept': 'application/json'
-                        }
-                    });
 
-                    // Process the response data
-                    const data = response.data;
-                    const values = data.values;
-
-                    console.log("the output of the first sheet excel is:", values);
-
-                    if (!values || values.length === 0) {
-                        return {};  // Return an empty dictionary if no values
+                const firstsheet_response = await axios.get(rangeUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Accept': 'application/json'
                     }
+                });
 
-                    //console.log("jdb ajs ajsdb asjdbasjkd:", values);
+                // Process the response data
+                const firstsheet_data = firstsheet_response.data;
+                const values = firstsheet_data.values;
+              
+                // Transform the input data to the desired format, skipping the first row and empty entries
+            const nodes = values.slice(1).flatMap((row, rowIndex) =>
+                row
+                    .map((name, colIndex) => ({
+                        lvl: colIndex.toString(),
+                        name: name || '' // Assign empty string if name is not present
+                        //x: 0, // Default value
+                        //y: 0, // Default value
+                        //id: `n${colIndex}`
+                    }))
+                    .filter(entry => entry.name) // Filter out entries where name is empty
+            );
 
-                } catch (error) {
-                    console.error(`Error fetching data for worksheet '${worksheetId}':`, error);
-                    return {};  // Return an empty object in case of an error
-                }*/
+                //Output the result
+                console.log(`Nodes list from first worksheets is:`);
+                console.log(JSON.stringify(nodes, null, 2));
 
-
-
-
-                //  asynchronous operations sequentially
+                //  asynchronous operations sequentially for all other sheet
                 for (const id of worksheetIds.slice(1)) {
                     const name = worksheetsDict[id];
 
@@ -299,30 +289,26 @@ async function readExcel(itemId) {
                     nodes2.push(...data); // Using spread syntax to add elements to the array
                 }
 
-                console.log(`The combined list from all worksheets is:`, nodes2);
-            
-                // Define your asynchronous function to get row count
-                async function getRowCount(driveId, itemId, worksheetId, accessToken) {
-                    const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets/${worksheetId}/usedRange`;
+                // Transform the input data to the desired format
+                const links = nodes2.map(([target, source]) => ({
+                    target,
+                    source
+                }));
 
-                    try {
-                        const response = await axios.get(url, {
-                            headers: {
-                                'Authorization': `Bearer ${accessToken}`,
-                                'Content-Type': 'application/json'
-                            }
-                        });
+                // Output the result
+                console.log(`Links list from all worksheets is:`);
+                console.log(JSON.stringify(links, null, 2));
 
-                        const data = response.data;
-                        const rowCount = data.rowCount;
+                //DATA IN FORMAT NEEDED FOR PLOTTING VALUE MAP
+                const data = {
+                    nodes,
+                    links
+                };
 
-                        // Optionally store rowCount or do other processing
-                        return rowCount;
+                // Output the result
+                console.log("final combined data list:");
+                console.log(JSON.stringify(data, null, 2));
 
-                    } catch (error) {
-                        console.error(`Error fetching data for Worksheet ID ${worksheetId}:`, error);
-                    }
-                }
 
 async function fetchAndProcessData(worksheetId, workRowCount) {
     // Construct the range URL dynamically
@@ -348,11 +334,60 @@ async function fetchAndProcessData(worksheetId, workRowCount) {
 
         return values;
 
+        
+
     } catch (error) {
         console.error(`Error fetching data for worksheet '${worksheetId}':`, error);
         return {};  // Return an empty object in case of an error
     }
 }
+
+// Define your asynchronous function to get row count
+async function getRowCount(driveId, itemId, worksheetId, accessToken) {
+                    const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets/${worksheetId}/usedRange`;
+
+                    try {
+                        const response = await axios.get(url, {
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        const data = response.data;
+                        const rowCount = data.rowCount;
+
+                        // Optionally store rowCount or do other processing
+                        return rowCount;
+
+                    } catch (error) {
+                        console.error(`Error fetching data for Worksheet ID ${worksheetId}:`, error);
+                    }
+                }
+
+
+async function getcolumnCount(driveId, itemId, worksheetId, accessToken) {
+                    const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/workbook/worksheets/${worksheetId}/usedRange`;
+
+                    try {
+                        const response = await axios.get(url, {
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        const data = response.data;
+                        const columnCount = data.columnCount;
+
+                        // Optionally store rowCount or do other processing
+                        return columnCount;
+
+                    } catch (error) {
+                        console.error(`Error fetching data for Worksheet ID ${worksheetId}:`, error);
+                    }
+                }
+
             } catch (error) {
                 console.error('Error reading Excel file:', error.response ? error.response.data : error.message);
                 updateStatusMessage('Error reading Excel file.');
